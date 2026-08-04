@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIBE ポイントランキング</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0a0f1f; --panel:#111a33; --panel-2:#0d1528;
+    --text:#f7f9fe; --muted:#d5deef; --line:#2f3f68;
+    --sapphire:#3f74e0; --sapphire-soft:rgba(63,116,224,.18);
+    --gold:#d4af37; --gold-soft:rgba(212,175,55,.14); --gold-line:rgba(255,213,84,.8); --gold-text:#ffe9a8;
+    --plat-line:rgba(228,238,255,.75); --plat-text:#eef3ff; --plat-soft:rgba(214,222,238,.10);
+    --copper-line:rgba(255,158,84,.75); --copper-text:#ffcf9e; --copper-soft:rgba(210,130,74,.12);
+    --gold-grad:linear-gradient(110deg,#8a6a1f 0%,#d4af37 25%,#f7ecc0 50%,#d4af37 75%,#8a6a1f 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  button,select,input,textarea{touch-action:manipulation}
+  body{
+    font-family:"Noto Sans JP",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:
+      radial-gradient(1100px 560px at 50% -12%, rgba(63,116,224,.20), transparent 62%),
+      radial-gradient(900px 500px at 85% 108%, rgba(212,175,55,.07), transparent 55%),
+      linear-gradient(180deg,#0c1226,#0a0f1f 55%,#090d1b);
+    background-attachment:fixed;
+    color:var(--text);
+    max-width:560px;margin:0 auto;padding:26px 16px 90px;
+    min-height:100vh;
+  }
+
+  /* ---- ヘッダー ---- */
+  .brand{text-align:center;margin-bottom:8px}
+  .brand .logo{
+    font-family:"Cinzel","Noto Sans JP",serif;font-weight:900;font-size:42px;letter-spacing:.16em;
+    background:var(--gold-grad);background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:sheen 7s linear infinite;
+    filter:drop-shadow(0 2px 10px rgba(212,175,55,.22));
+  }
+  @keyframes sheen{to{background-position:200% center}}
+  .brand .sub{
+    font-size:12.5px;font-weight:700;color:#e8edf8;letter-spacing:.42em;margin-top:4px;
+  }
+  .brand::after{
+    content:"";display:block;width:190px;height:1px;margin:14px auto 0;
+    background:linear-gradient(90deg,transparent,rgba(212,175,55,.75),transparent);
+  }
+  .sync-badge{
+    display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+    font-size:12px;font-weight:700;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:5px 13px;
+    background:rgba(255,255,255,.03);
+  }
+  .sync-badge .dot{width:7px;height:7px;border-radius:50%;background:#5a6a92}
+  .sync-badge.on{color:#5fe693;border-color:rgba(95,230,147,.45)}
+  .sync-badge.on .dot{background:#37c95e;box-shadow:0 0 8px rgba(55,201,94,.7)}
+
+  /* ---- タブ ---- */
+  .tabs{display:flex;gap:4px;margin:20px 0 24px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{
+    flex-shrink:0;background:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:15px;font-weight:700;color:var(--muted);
+    padding:12px 14px;border-bottom:2px solid transparent;
+    transition:color .15s, transform .08s ease;
+  }
+  .tab:active{transform:scale(.96)}
+  .tab.active{color:var(--gold-text);border-bottom-color:var(--gold)}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* ---- 特典バナー ---- */
+  .perks{
+    background:linear-gradient(160deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
+    border:1px solid var(--gold-line);border-radius:14px;
+    padding:15px 17px;margin-bottom:20px;font-size:14.5px;line-height:1.75;font-weight:500;
+    white-space:pre-wrap;color:#f7f9fe;
+    box-shadow:0 0 14px rgba(255,200,60,.10), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .perks .p-title{
+    font-weight:900;font-size:15px;color:var(--gold-text);margin-bottom:5px;letter-spacing:.05em;
+    text-shadow:0 0 10px rgba(255,205,80,.45);
+  }
+
+  .section-head{display:flex;align-items:center;gap:10px;margin:8px 0 16px}
+  .section-head h2{
+    font-family:"Cinzel","Noto Sans JP",serif;
+    font-size:25px;font-weight:900;color:var(--text);letter-spacing:.04em;
+  }
+  .section-head svg{width:26px;height:26px;filter:drop-shadow(0 0 6px rgba(255,205,80,.5))}
+  .head-actions{margin-left:auto}
+
+  /* ---- Top3 カード（ネオン仕様） ---- */
+  .card{
+    border-radius:18px;border:1px solid var(--line);
+    padding:20px 20px 18px;margin-bottom:16px;position:relative;
+    background:linear-gradient(180deg,#121c38,#101830);
+    box-shadow:0 12px 34px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .card.rank1{
+    border-color:var(--gold-line);
+    background:linear-gradient(160deg, rgba(212,175,55,.18), rgba(212,175,55,.05) 42%, #101830);
+    box-shadow:
+      0 0 16px rgba(255,200,60,.28), 0 0 46px rgba(255,190,40,.13),
+      0 12px 34px rgba(0,0,0,.4),
+      inset 0 0 26px rgba(255,205,70,.08), inset 0 1px 0 rgba(255,255,255,.09);
+  }
+  .card.rank2{
+    border-color:var(--plat-line);
+    background:linear-gradient(160deg, rgba(214,222,238,.14), rgba(214,222,238,.04) 42%, #101830);
+    box-shadow:
+      0 0 14px rgba(205,220,255,.24), 0 0 40px rgba(205,220,255,.10),
+      0 12px 34px rgba(0,0,0,.4),
+      inset 0 0 24px rgba(220,232,255,.06), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .card.rank3{
+    border-color:var(--copper-line);
+    background:linear-gradient(160deg, rgba(210,130,74,.15), rgba(210,130,74,.04) 42%, #101830);
+    box-shadow:
+      0 0 14px rgba(255,150,70,.24), 0 0 40px rgba(255,150,70,.10),
+      0 12px 34px rgba(0,0,0,.4),
+      inset 0 0 24px rgba(255,160,80,.06), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  /* きらめき */
+  .card.rank1::before,.card.rank1::after,
+  .card.rank2::before,.card.rank3::before{
+    position:absolute;pointer-events:none;
+  }
+  .card.rank1::before{
+    content:"✦";top:14px;right:84px;font-size:13px;color:#ffe9a8;
+    text-shadow:0 0 8px rgba(255,210,90,.95), 0 0 20px rgba(255,190,50,.55);
+    animation:twinkle 2.8s ease-in-out infinite;
+  }
+  .card.rank1::after{
+    content:"✦";bottom:20px;right:26px;font-size:10px;color:#fff3cf;
+    text-shadow:0 0 8px rgba(255,210,90,.9);
+    animation:twinkle 2.8s ease-in-out infinite 1.3s;
+  }
+  .card.rank2::before{
+    content:"✦";top:16px;right:84px;font-size:11px;color:#eef3ff;
+    text-shadow:0 0 8px rgba(210,225,255,.95), 0 0 18px rgba(190,210,255,.5);
+    animation:twinkle 3.2s ease-in-out infinite .5s;
+  }
+  .card.rank3::before{
+    content:"✦";top:16px;right:84px;font-size:11px;color:#ffcf9e;
+    text-shadow:0 0 8px rgba(255,160,80,.9), 0 0 18px rgba(255,140,60,.5);
+    animation:twinkle 3.4s ease-in-out infinite .9s;
+  }
+  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(9,13,27,.55);border:1px solid var(--line);
+    border-radius:999px;padding:8px 15px;font-size:14px;font-weight:700;color:var(--muted);
+  }
+  .rank1 .badge{border-color:var(--gold-line);color:var(--gold-text);text-shadow:0 0 9px rgba(255,205,80,.55)}
+  .rank2 .badge{border-color:var(--plat-line);color:var(--plat-text);text-shadow:0 0 9px rgba(210,225,255,.55)}
+  .rank3 .badge{border-color:var(--copper-line);color:var(--copper-text);text-shadow:0 0 9px rgba(255,160,80,.55)}
+  .badge svg{width:15px;height:15px}
+
+  /* ---- 王冠タイル（高級プレート仕様） ---- */
+  .trophy-tile{
+    position:absolute;top:18px;right:18px;width:54px;height:54px;border-radius:15px;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(120% 90% at 30% 12%, rgba(255,255,255,.14), transparent 46%),
+      linear-gradient(165deg,#1c2748,#0d1528 70%);
+    border:1px solid var(--line);
+    box-shadow:0 8px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16);
+  }
+  .rank1 .trophy-tile{
+    border-color:var(--gold-line);
+    box-shadow:0 0 18px rgba(255,200,60,.4), 0 8px 20px rgba(0,0,0,.45),
+      inset 0 0 14px rgba(255,205,70,.14), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .rank2 .trophy-tile{
+    border-color:var(--plat-line);
+    box-shadow:0 0 16px rgba(205,220,255,.35), 0 8px 20px rgba(0,0,0,.45),
+      inset 0 0 14px rgba(220,232,255,.12), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .rank3 .trophy-tile{
+    border-color:var(--copper-line);
+    box-shadow:0 0 16px rgba(255,150,70,.35), 0 8px 20px rgba(0,0,0,.45),
+      inset 0 0 14px rgba(255,160,80,.12), inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .trophy-tile svg{width:30px;height:30px}
+  .rank1 .trophy-tile svg{filter:drop-shadow(0 0 6px rgba(255,205,80,.6))}
+  .rank2 .trophy-tile svg{filter:drop-shadow(0 0 6px rgba(215,228,255,.55))}
+  .rank3 .trophy-tile svg{filter:drop-shadow(0 0 6px rgba(255,155,75,.55))}
+
+  .member-line{display:flex;align-items:center;gap:14px;margin:18px 0 14px}
+  .avatar{
+    width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:700;color:#fff;flex-shrink:0;background:#4a5878;
+    box-shadow:0 0 0 2px rgba(255,255,255,.14), 0 4px 14px rgba(0,0,0,.35);
+  }
+  .rank1 .avatar{box-shadow:0 0 0 2px rgba(255,213,84,.8), 0 0 14px rgba(255,205,70,.35), 0 4px 14px rgba(0,0,0,.35)}
+  .rank2 .avatar{box-shadow:0 0 0 2px rgba(228,238,255,.75), 0 0 12px rgba(210,225,255,.3), 0 4px 14px rgba(0,0,0,.35)}
+  .rank3 .avatar{box-shadow:0 0 0 2px rgba(255,158,84,.75), 0 0 12px rgba(255,160,80,.3), 0 4px 14px rgba(0,0,0,.35)}
+  .member-line .name{font-size:21px;font-weight:900;color:var(--text)}
+  .member-line .role{font-size:14px;color:var(--muted);margin-top:2px}
+
+  /* ---- ポイント数字（流れるネオングリント） ---- */
+  .points{font-size:39px;font-weight:900;letter-spacing:-.01em;line-height:1.1;color:var(--text)}
+  .rank1 .points{
+    background:linear-gradient(110deg,#c9992a,#ffe08a 30%,#fff6d8 50%,#ffe08a 70%,#c9992a);
+    background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:glint 3.2s linear infinite;
+    filter:drop-shadow(0 0 12px rgba(255,205,80,.45));
+  }
+  .rank2 .points{
+    background:linear-gradient(110deg,#9aa6bd,#e6ecf8 30%,#ffffff 50%,#e6ecf8 70%,#9aa6bd);
+    background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:glint 3.6s linear infinite;
+    filter:drop-shadow(0 0 12px rgba(215,228,255,.4));
+  }
+  .rank3 .points{
+    background:linear-gradient(110deg,#b8642c,#ffb37a 30%,#ffe3c4 50%,#ffb37a 70%,#b8642c);
+    background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:glint 3.8s linear infinite;
+    filter:drop-shadow(0 0 12px rgba(255,155,75,.4));
+  }
+  @keyframes glint{to{background-position:220% center}}
+  .points .unit{font-size:17px;font-weight:700;margin-left:4px}
+  .breakdown{font-size:15px;color:#f0f4fb;margin-top:8px;font-weight:500}
+
+  @media (prefers-reduced-motion: reduce){
+    .brand .logo,.rank1 .points,.rank2 .points,.rank3 .points,
+    .card.rank1::before,.card.rank1::after,.card.rank2::before,.card.rank3::before{animation:none}
+  }
+
+  /* ---- 4位以下 ---- */
+  .others-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-top:1px solid transparent;
+    border-image:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent) 1;
+    padding-top:24px;margin-top:28px;margin-bottom:14px;
+  }
+  .others-head h3{font-size:21px;font-weight:900;color:var(--text)}
+  .others-head .count{font-size:14px;color:var(--muted);font-weight:700}
+  .row{
+    display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:16px;
+    padding:15px 16px;margin-bottom:10px;
+    background:linear-gradient(180deg,#101830,#0e1528);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .row .avatar{width:46px;height:46px;font-size:18px}
+  .row .info{flex:1;min-width:0}
+  .row .r-name{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+  .row .r-name .num{margin-right:6px;color:#bcc9e4}
+  .row .r-role{font-size:13px;color:var(--muted);margin-top:2px}
+  .row .r-pt{font-size:14px;font-weight:700;color:#f0f4fb;white-space:nowrap}
+  .chip{
+    border:1px solid #3a4f7d;border-radius:10px;padding:7px 13px;
+    font-size:13px;font-weight:700;color:#f0f4fb;background:rgba(9,13,27,.5);white-space:nowrap;
+  }
+  .empty{color:var(--muted);font-size:14.5px;text-align:center;padding:30px 0;font-weight:500}
+
+  /* ---- フォーム共通 ---- */
+  label.f-label{display:block;font-size:14px;font-weight:700;color:#e8edf8;margin:16px 0 6px}
+  select,input[type=text],input[type=number],input[type=date],textarea{
+    width:100%;font-family:inherit;font-size:16px;padding:13px 14px;
+    border:1px solid var(--line);border-radius:12px;background:var(--panel-2);color:var(--text);
+  }
+  select:focus,input:focus,textarea:focus{
+    outline:none;border-color:var(--sapphire);box-shadow:0 0 0 3px var(--sapphire-soft);
+  }
+  ::placeholder{color:#93a3c4}
+  textarea{resize:vertical;min-height:70px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
+  .p-chip{
+    border:1px solid #3a4f7d;border-radius:999px;background:var(--panel-2);cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:700;padding:11px 16px;color:#f0f4fb;
+    min-height:42px;transition:transform .08s ease, border-color .15s, background .15s, color .15s;
+  }
+  .p-chip:active{transform:scale(.96)}
+  .p-chip.sel{border-color:var(--gold-line);background:var(--gold-soft);color:var(--gold-text)}
+  .p-chip.sel-s{border-color:var(--plat-line);background:var(--plat-soft);color:var(--plat-text)}
+  .kind-toggle{display:flex;gap:8px}
+  .kind-toggle button{
+    flex:1;font-family:inherit;font-size:14.5px;font-weight:900;padding:13px 8px;cursor:pointer;
+    border:1px solid #3a4f7d;border-radius:12px;background:var(--panel-2);color:#d5deef;
+    min-height:48px;transition:transform .08s ease, border-color .15s, background .15s, color .15s;
+  }
+  .kind-toggle button:active{transform:scale(.97)}
+  .kind-toggle .k-gold.on{border-color:var(--gold-line);background:var(--gold-soft);color:var(--gold-text)}
+  .kind-toggle .k-silver.on{border-color:var(--plat-line);background:var(--plat-soft);color:var(--plat-text)}
+  .btn{
+    display:inline-block;font-family:inherit;font-size:15.5px;font-weight:900;cursor:pointer;
+    border:none;border-radius:12px;padding:14px 20px;min-height:48px;
+    background:linear-gradient(135deg,#f0d060,#c9992a);color:#1a1206;
+    box-shadow:0 8px 22px rgba(212,175,55,.28), inset 0 1px 0 rgba(255,255,255,.4);
+    transition:transform .08s ease, box-shadow .15s;
+  }
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn.full{width:100%;margin-top:20px}
+  .btn.ghost{
+    background:rgba(255,255,255,.05);color:#f0f4fb;border:1px solid #3a4f7d;
+    font-weight:700;font-size:13.5px;padding:11px 15px;min-height:42px;box-shadow:none;
+  }
+  .btn.small{font-size:14px;padding:11px 16px;min-height:44px}
+  .btn.danger-text{background:none;color:#ff9488;font-size:13px;font-weight:700;padding:8px;min-height:36px;box-shadow:none}
+  .preview-pt{
+    margin-top:14px;font-size:14.5px;font-weight:700;color:#f0f4fb;background:var(--panel-2);
+    border:1px dashed #3a4f7d;border-radius:12px;padding:13px 15px;
+  }
+
+  /* ---- リスト（履歴・メンバー・設定） ---- */
+  .list-row{
+    display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;
+    padding:13px 14px;margin-bottom:8px;font-size:14.5px;
+    background:linear-gradient(180deg,#101830,#0e1528);
+  }
+  .list-row .grow{flex:1;min-width:0}
+  .list-row .t1{font-weight:700;color:var(--text)}
+  .list-row .t2{font-size:13px;color:var(--muted);margin-top:3px}
+  .pt-pill{font-weight:900;white-space:nowrap;font-size:14.5px}
+  .pt-pill.g{color:var(--gold-text)}
+  .pt-pill.s{color:#eef3ff}
+  .set-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .set-row input{padding:11px 12px;font-size:14.5px}
+  .set-row .w-label{flex:2}
+  .set-row .w-num{flex:1}
+  .add-line{margin:4px 0 20px}
+  h4.set-h{font-size:15.5px;font-weight:900;margin:26px 0 10px;color:#ffe9a8;letter-spacing:.03em}
+  .note{font-size:13.5px;color:#d5deef;line-height:1.75;margin-top:6px}
+  .gas-status{font-size:13.5px;font-weight:700;margin-top:10px}
+  .gas-status.ok{color:#5fe693}
+  .gas-status.ng{color:#ff9488}
+
+  /* ---- アイコン画像 ---- */
+  .avatar{overflow:hidden}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .ava-btn{position:relative;width:46px;height:46px;border:none;background:none;padding:0;cursor:pointer;flex-shrink:0;transition:transform .08s ease}
+  .ava-btn:active{transform:scale(.94)}
+  .ava-btn .face{width:100%;height:100%;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.14)}
+  .ava-btn .face img{width:100%;height:100%;object-fit:cover;display:block}
+  .ava-btn .cam{position:absolute;right:-4px;bottom:-4px;width:21px;height:21px;border-radius:50%;background:#1c2748;border:1px solid #3a4f7d;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+  /* ---- トースト ---- */
+  #toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(135deg,#f0d060,#c9992a);color:#1a1206;font-size:14px;font-weight:700;
+    padding:13px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;
+    max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:10;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .viewer-note{text-align:center;font-size:13px;color:#d5deef;margin-top:26px}
+
+  /* ---- スマホ最適化 ---- */
+  @media (max-width:420px){
+    body{padding:20px 12px 84px}
+    .brand .logo{font-size:36px}
+    .card{padding:18px 16px 16px;border-radius:16px}
+    .trophy-tile{width:48px;height:48px;top:16px;right:16px;border-radius:13px}
+    .trophy-tile svg{width:26px;height:26px}
+    .card.rank1::before{right:74px}
+    .card.rank2::before{right:74px}
+    .card.rank3::before{right:74px}
+    .points{font-size:33px}
+    .member-line .name{font-size:19px}
+    .avatar{width:52px;height:52px;font-size:20px}
+    .badge{font-size:13px;padding:7px 13px}
+    .breakdown{font-size:14px}
+    .row{padding:13px 13px}
+    .row .r-pt{font-size:13px}
+    .chip{padding:6px 11px;font-size:12.5px}
+    .tabs{margin:16px 0 20px}
+    .tab{padding:12px 11px;font-size:14px}
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand">
+    <div class="logo">TRIBE</div>
+    <div class="sub">POINT RANKING</div>
+    <div style="display:flex;justify-content:center"><span class="sync-badge" id="syncBadge"><span class="dot"></span><span id="syncText">ローカル保存</span></span></div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-v="ranking">ランキング</button>
+    <button class="tab" data-v="grant">ポイント付与</button>
+    <button class="tab" data-v="history">履歴</button>
+    <button class="tab" data-v="members">メンバー</button>
+    <button class="tab" data-v="settings">設定</button>
+  </div>
+
+  <!-- ランキング -->
+  <section class="view active" id="v-ranking">
+    <div id="perksBox"></div>
+    <div class="section-head">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="crown-head" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff6d0"/><stop offset=".55" stop-color="#e8bf3e"/><stop offset="1" stop-color="#8a6a1f"/>
+        </linearGradient></defs>
+        <path d="M2.8 8.1a.72.72 0 0 1 1.14-.6L7.2 10l3.96-5.3a1.05 1.05 0 0 1 1.68 0L16.8 10l3.26-2.5a.72.72 0 0 1 1.14.6c0 .06-.01.12-.02.18l-1.8 8.1a1.7 1.7 0 0 1-1.66 1.32H6.28a1.7 1.7 0 0 1-1.66-1.32l-1.8-8.1a.86.86 0 0 1-.02-.18Z"
+          fill="url(#crown-head)" stroke="rgba(15,10,2,.4)" stroke-width=".55" stroke-linejoin="round"/>
+        <circle cx="12" cy="14.2" r="1.3" fill="#fff" opacity=".95"/>
+        <circle cx="7.7" cy="15" r=".85" fill="#fff" opacity=".7"/>
+        <circle cx="16.3" cy="15" r=".85" fill="#fff" opacity=".7"/>
+        <circle cx="12" cy="4.6" r=".7" fill="#fff6d0"/>
+      </svg>
+      <h2>Top 3</h2>
+      <div class="head-actions" id="shareBtnBox"><button class="btn ghost" id="shareBtn">共有リンク</button></div>
+    </div>
+    <div id="top3"></div>
+    <div class="others-head"><h3>4位以下</h3><span class="count" id="othersCount"></span></div>
+    <div id="others"></div>
+    <div class="viewer-note" id="viewerNote" style="display:none"></div>
+  </section>
+
+  <!-- ポイント付与 -->
+  <section class="view" id="v-grant">
+    <label class="f-label">メンバー</label>
+    <select id="gMember"></select>
+
+    <label class="f-label">種類</label>
+    <div class="kind-toggle">
+      <button class="k-gold on" id="kGold">ゴールド（成約・売上）</button>
+      <button class="k-silver" id="kSilver">シルバー（功績・貢献）</button>
+    </div>
+
+    <label class="f-label">内容を選択</label>
+    <div class="chips" id="gPresets"></div>
+
+    <div id="customBox" style="display:none">
+      <label class="f-label" id="customLabelTitle">カスタム内容</label>
+      <input type="text" id="cLabel" placeholder="例：追加成約 50万円">
+      <label class="f-label" id="customPtTitle">金額（円）</label>
+      <input type="number" id="cAmount" placeholder="例：500000" min="0">
+    </div>
+
+    <label class="f-label">メモ（任意）</label>
+    <input type="text" id="gReason" placeholder="例：初成約！Zoomセールスから">
+
+    <label class="f-label">日付</label>
+    <input type="date" id="gDate">
+
+    <div class="preview-pt" id="gPreview">付与ポイント：—</div>
+    <button class="btn full" id="grantBtn">ポイントを付与する</button>
+  </section>
+
+  <!-- 履歴 -->
+  <section class="view" id="v-history">
+    <div class="section-head"><h2>付与履歴</h2></div>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- メンバー -->
+  <section class="view" id="v-members">
+    <div class="section-head"><h2>メンバー管理</h2></div>
+    <div class="set-row add-line">
+      <input type="text" id="mName" class="w-label" placeholder="名前（例：タケル）">
+      <button class="btn small" id="mAdd">追加</button>
+    </div>
+    <div id="memberList"></div>
+  </section>
+
+  <!-- 設定 -->
+  <section class="view" id="v-settings">
+    <div class="section-head"><h2>設定</h2></div>
+
+    <h4 class="set-h" style="margin-top:10px">Googleスプレッドシート連携</h4>
+    <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/…/exec">
+    <div style="margin-top:10px"><button class="btn ghost" id="gasTest">保存して接続テスト</button></div>
+    <div class="gas-status" id="gasStatus"></div>
+    <p class="note">Apps Scriptの「デプロイ」で発行されるウェブアプリURL（/execで終わるもの）を貼り付けてください。連携すると、付与・メンバー追加などの操作が全てスプレッドシートに記録され、シートが正式なデータ保管場所になります。<br>※claude.aiのプレビュー内からはシートに接続できません。ダウンロードしたファイルをブラウザで開いて使ってください。</p>
+
+    <h4 class="set-h">ゴールドの付与メニュー</h4>
+    <div id="goldPresetRows"></div>
+    <div class="add-line"><button class="btn ghost" id="addGold">＋ 追加</button></div>
+
+    <h4 class="set-h">シルバーの付与メニュー</h4>
+    <div id="silverPresetRows"></div>
+    <div class="add-line"><button class="btn ghost" id="addSilver">＋ 追加</button></div>
+
+    <h4 class="set-h">ランク基準（合計pt）</h4>
+    <div id="rankRows"></div>
+    <p class="note">上から順に高いランク。合計ポイントがしきい値以上で到達します。</p>
+
+    <h4 class="set-h">上位特典の表示テキスト</h4>
+    <textarea id="perksInput" placeholder="例：月間1位 → 三橋との個別飲み招待&#10;Top3 → 限定グループ招待"></textarea>
+
+    <h4 class="set-h">データ管理</h4>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" id="exportBtn">バックアップ書き出し</button>
+      <button class="btn ghost" id="importBtn">読み込み</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+      <input type="file" id="iconFile" accept="image/*" style="display:none">
+    </div>
+    <p class="note">シート連携中はスプレッドシート自体がバックアップになります。書き出しは予備用です。</p>
+  </section>
+
+  <div id="toast"></div>
+
+<script>
+/* =====================================================
+   TRIBE ポイントランキング（スプレッドシート連携版）
+   - 設定タブでGASのURLを登録すると、シートが正式なデータ保管場所になる
+   - 未連携時はこのページ内に自動保存（従来どおり）
+===================================================== */
+const KEY = "tribe-points-v1";
+const CONF_KEY = "tribe-points-conf-v1";
+const fmt = n => n.toLocaleString("ja-JP");
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const todayStr = () => { const d = new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+
+/* ---- 保存アダプタ（claude.ai内 → window.storage / 通常ブラウザ → localStorage） ---- */
+const store = {
+  mem: {},
+  async load(key){
+    if (typeof window.storage !== "undefined" && window.storage?.get){
+      try{ const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }catch(e){ return null; }
+    }
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return this.mem[key] || null; }
+  },
+  async save(key, data){
+    this.mem[key] = data;
+    if (typeof window.storage !== "undefined" && window.storage?.set){
+      try{ await window.storage.set(key, JSON.stringify(data)); return; }catch(e){}
+    }
+    try{ localStorage.setItem(key, JSON.stringify(data)); }catch(e){}
+  }
+};
+
+/* ---- 初期データ ---- */
+const DEFAULTS = () => ({
+  members: [],
+  history: [],
+  settings: {
+    goldPresets: [
+      { label:"88万円 成約",  pt:880000 },
+      { label:"132万円 成約", pt:1320000 },
+      { label:"550万円 成約", pt:5500000 },
+    ],
+    silverPresets: [
+      { label:"アウトプット報告", pt:1000 },
+      { label:"勉強会・セミナー参加", pt:2000 },
+      { label:"メンバーのサポート", pt:3000 },
+    ],
+    ranks: [
+      { label:"プラチナ", min:3000000 },
+      { label:"ゴールド", min:1000000 },
+      { label:"シルバー", min:500000 },
+      { label:"ブロンズ", min:100000 },
+      { label:"ランクなし", min:0 },
+    ],
+    perks: ""
+  }
+});
+
+let S = DEFAULTS();
+let gasUrl = "";
+let grantKind = "gold";
+let grantSel = null;
+
+/* ---- GAS 通信 ---- */
+async function apiGet(url){
+  const r = await fetch(url || gasUrl);
+  if(!r.ok) throw new Error("http " + r.status);
+  return await r.json();
+}
+async function apiPost(action, payload){
+  const r = await fetch(gasUrl, { method:"POST", body: JSON.stringify({ action, payload }) });
+  if(!r.ok) throw new Error("http " + r.status);
+  return await r.json();
+}
+function applyRemote(d){
+  if(!d || !d.ok) return;
+  const prevIcons = {};
+  S.members.forEach(m => { if(m.icon) prevIcons[m.id] = m.icon; });
+  S.members = (d.members || []).map(m => ({ ...m, icon: m.icon || prevIcons[m.id] || "" }));
+  S.history = d.history || [];
+  if(d.settings) S.settings = Object.assign(DEFAULTS().settings, d.settings);
+}
+async function sync(action, payload){
+  await store.save(KEY, S); /* ローカルにも常に控えを保存 */
+  if(!gasUrl) return;
+  try{
+    const d = await apiPost(action, payload);
+    applyRemote(d);
+  }catch(e){
+    toast("⚠ シートへの保存に失敗（通信環境を確認）");
+  }
+}
+function setSyncBadge(on){
+  const b = document.getElementById("syncBadge");
+  b.classList.toggle("on", on);
+  document.getElementById("syncText").textContent = on ? "シート連携中" : "ローカル保存";
+}
+
+/* ---- SVG ---- */
+const medalSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="5"/><path d="M9 10.5 6 3h4l2 4 2-4h4l-3 7.5"/></svg>';
+const CROWN_GRADS = [
+  ["#fff6d0","#e8bf3e","#8a6a1f"],
+  ["#ffffff","#c9d3e6","#67748f"],
+  ["#ffdfb8","#e08a4e","#8f4517"],
+];
+function crownSvg(i){
+  const g = CROWN_GRADS[i] || CROWN_GRADS[0];
+  const id = "crown-g" + i;
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${g[0]}"/><stop offset=".55" stop-color="${g[1]}"/><stop offset="1" stop-color="${g[2]}"/>
+    </linearGradient></defs>
+    <path d="M2.8 8.1a.72.72 0 0 1 1.14-.6L7.2 10l3.96-5.3a1.05 1.05 0 0 1 1.68 0L16.8 10l3.26-2.5a.72.72 0 0 1 1.14.6c0 .06-.01.12-.02.18l-1.8 8.1a1.7 1.7 0 0 1-1.66 1.32H6.28a1.7 1.7 0 0 1-1.66-1.32l-1.8-8.1a.86.86 0 0 1-.02-.18Z"
+      fill="url(#${id})" stroke="rgba(15,10,2,.4)" stroke-width=".55" stroke-linejoin="round"/>
+    <path d="M4.6 9.6 6 15.3h12l1.4-5.7" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".5"/>
+    <circle cx="12" cy="14.2" r="1.3" fill="#fff" opacity=".95"/>
+    <circle cx="7.7" cy="15" r=".85" fill="#fff" opacity=".7"/>
+    <circle cx="16.3" cy="15" r=".85" fill="#fff" opacity=".7"/>
+    <circle cx="12" cy="4.6" r=".7" fill="${g[0]}"/>
+  </svg>`;
+}
+const TITLES = ["1位 王者","2位 銀メダル","3位 銅メダル"];
+const COLORS = ["#7fb8a4","#8aa3d6","#d69a8a","#b48ad6","#d6c08a","#8ac4d6","#d68ab0","#93c98b"];
+const aColor = name => COLORS[[...name].reduce((a,c)=>a+c.codePointAt(0),0)%COLORS.length];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+/* ---- アイコン画像 ---- */
+let pendingIconMid = null;
+function avatarHtml(m){
+  if(m.icon) return `<div class="avatar"><img src="${m.icon}" alt=""></div>`;
+  return `<div class="avatar" style="background:${aColor(m.name)}">${esc([...m.name][0]||"?")}</div>`;
+}
+function fileToIcon(file){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const size = 128;
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const ctx = c.getContext("2d");
+      const s = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      let q = .82, data = c.toDataURL("image/jpeg", q);
+      while(data.length > 45000 && q > .3){ q -= .15; data = c.toDataURL("image/jpeg", q); }
+      res(data);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error("read error")); };
+    img.src = url;
+  });
+}
+
+/* ---- 集計 ---- */
+function totals(){
+  const map = {};
+  S.members.forEach(m => map[m.id] = { ...m, gold:0, silver:0 });
+  S.history.forEach(h => {
+    if(!map[h.mid]) return;
+    if(h.kind === "gold") map[h.mid].gold += h.pt; else map[h.mid].silver += h.pt;
+  });
+  return Object.values(map)
+    .map(m => ({...m, total:m.gold+m.silver}))
+    .sort((a,b)=> b.total - a.total || a.name.localeCompare(b.name,"ja"));
+}
+const rankLabel = pt => {
+  const r = [...S.settings.ranks].sort((a,b)=>b.min-a.min).find(r=>pt>=r.min);
+  return r ? r.label : "ランクなし";
+};
+
+/* ---- ランキング描画 ---- */
+function renderRanking(data, updatedText){
+  const list = data || totals();
+  const perksEl = document.getElementById("perksBox");
+  perksEl.innerHTML = S.settings.perks?.trim()
+    ? `<div class="perks"><div class="p-title">🏆 上位特典</div>${esc(S.settings.perks)}</div>` : "";
+
+  const top3 = list.slice(0,3);
+  document.getElementById("top3").innerHTML = top3.length ? top3.map((m,i)=>`
+    <div class="card rank${i+1}">
+      <span class="badge">${medalSvg}${TITLES[i]}</span>
+      <div class="trophy-tile">${crownSvg(i)}</div>
+      <div class="member-line">
+        ${avatarHtml(m)}
+        <div>
+          <div class="name">${esc(m.name)}</div>
+          <div class="role">${esc(m.role||"TRIBE生")}</div>
+        </div>
+      </div>
+      <div class="points">${fmt(m.total)}<span class="unit">pt</span></div>
+      <div class="breakdown">ゴールド ${fmt(m.gold)} / シルバー ${fmt(m.silver)}</div>
+    </div>`).join("")
+    : '<div class="empty">メンバーを追加するとランキングが表示されます</div>';
+
+  const others = list.slice(3);
+  document.getElementById("othersCount").textContent = `${others.length}名`;
+  document.getElementById("others").innerHTML = others.length ? others.map((m,i)=>`
+    <div class="row">
+      ${avatarHtml(m)}
+      <div class="info">
+        <div class="r-name"><span class="num">#${i+4}</span>${esc(m.name)}</div>
+        <div class="r-role">${esc(m.role||"TRIBE生")}</div>
+      </div>
+      <div class="r-pt">${fmt(m.total)} pt</div>
+      <span class="chip">${esc(rankLabel(m.total))}</span>
+    </div>`).join("") : "";
+
+  const vn = document.getElementById("viewerNote");
+  if(updatedText){ vn.style.display="block"; vn.textContent = updatedText; }
+}
+
+/* ---- 付与タブ ---- */
+function renderGrant(){
+  const sel = document.getElementById("gMember");
+  sel.innerHTML = S.members.length
+    ? S.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("")
+    : '<option value="">（先にメンバーを追加してください）</option>';
+
+  const presets = grantKind==="gold" ? S.settings.goldPresets : S.settings.silverPresets;
+  const box = document.getElementById("gPresets");
+  box.innerHTML = presets.map((p,i)=>
+    `<button class="p-chip" data-i="${i}">${esc(p.label)}（+${fmt(p.pt)}pt）</button>`
+  ).join("") + `<button class="p-chip" data-i="custom">カスタム入力</button>`;
+
+  box.querySelectorAll(".p-chip").forEach(b=>{
+    b.onclick = ()=>{
+      box.querySelectorAll(".p-chip").forEach(x=>x.classList.remove("sel","sel-s"));
+      b.classList.add(grantKind==="gold"?"sel":"sel-s");
+      const v = b.dataset.i;
+      grantSel = v==="custom" ? "custom" : presets[+v];
+      document.getElementById("customBox").style.display = v==="custom" ? "block" : "none";
+      updatePreview();
+    };
+  });
+  document.getElementById("customLabelTitle").textContent = grantKind==="gold" ? "カスタム内容" : "功績の内容";
+  document.getElementById("customPtTitle").textContent = grantKind==="gold" ? "金額（円）※1円=1pt" : "ポイント数";
+  document.getElementById("customBox").style.display="none";
+  grantSel = null;
+  updatePreview();
+}
+function currentGrantPt(){
+  if(grantSel==="custom") return Math.max(0, +document.getElementById("cAmount").value || 0);
+  return grantSel ? grantSel.pt : 0;
+}
+function updatePreview(){
+  const pt = currentGrantPt();
+  document.getElementById("gPreview").textContent =
+    pt>0 ? `付与ポイント：${grantKind==="gold"?"ゴールド":"シルバー"} +${fmt(pt)}pt` : "付与ポイント：—";
+}
+
+/* ---- 履歴タブ ---- */
+function renderHistory(){
+  const nameOf = id => (S.members.find(m=>m.id===id)||{}).name || "（削除済み）";
+  const el = document.getElementById("historyList");
+  el.innerHTML = S.history.length ? [...S.history].reverse().map(h=>`
+    <div class="list-row">
+      <div class="grow">
+        <div class="t1">${esc(nameOf(h.mid))} — ${esc(h.label)}</div>
+        <div class="t2">${esc(h.date)}${h.reason?` ・ ${esc(h.reason)}`:""}</div>
+      </div>
+      <span class="pt-pill ${h.kind==="gold"?"g":"s"}">+${fmt(h.pt)}pt</span>
+      <button class="btn danger-text" data-id="${h.id}">取消</button>
+    </div>`).join("") : '<div class="empty">まだ付与履歴がありません</div>';
+  el.querySelectorAll(".danger-text").forEach(b=>{
+    b.onclick = async ()=>{
+      if(!confirm("この付与を取り消しますか？ポイントも減算されます。")) return;
+      S.history = S.history.filter(h=>h.id!==b.dataset.id);
+      await sync("deleteGrant", { id: b.dataset.id });
+      renderAll(); toast("取り消しました");
+    };
+  });
+}
+
+/* ---- メンバータブ ---- */
+function renderMembers(){
+  const t = totals();
+  const el = document.getElementById("memberList");
+  el.innerHTML = S.members.length ? S.members.map(m=>{
+    const d = t.find(x=>x.id===m.id);
+    return `
+    <div class="list-row">
+      <button class="ava-btn" data-id="${m.id}" title="タップで画像を設定">
+        <span class="face" ${m.icon?"":`style="background:${aColor(m.name)}"`}>${m.icon?`<img src="${m.icon}" alt="">`:esc([...m.name][0]||"?")}</span>
+        <span class="cam">📷</span>
+      </button>
+      <div class="grow">
+        <div class="t1">${esc(m.name)}</div>
+        <div class="t2">${fmt(d?d.total:0)} pt ・ ${esc(rankLabel(d?d.total:0))}</div>
+      </div>
+      <button class="btn danger-text" data-id="${m.id}">削除</button>
+    </div>`;}).join("") : '<div class="empty">メンバーを追加してください</div>';
+  el.querySelectorAll(".danger-text").forEach(b=>{
+    b.onclick = async ()=>{
+      const m = S.members.find(x=>x.id===b.dataset.id);
+      if(!confirm(`${m.name} を削除しますか？付与履歴も削除されます。`)) return;
+      S.members = S.members.filter(x=>x.id!==b.dataset.id);
+      S.history = S.history.filter(h=>h.mid!==b.dataset.id);
+      await sync("deleteMember", { id: b.dataset.id });
+      renderAll(); toast("削除しました");
+    };
+  });
+  el.querySelectorAll(".ava-btn").forEach(b=>{
+    b.onclick = ()=>{
+      pendingIconMid = b.dataset.id;
+      document.getElementById("iconFile").click();
+    };
+  });
+}
+
+/* ---- 設定タブ ---- */
+function presetRows(containerId, arr){
+  const el = document.getElementById(containerId);
+  el.innerHTML = arr.map((p,i)=>`
+    <div class="set-row">
+      <input type="text" class="w-label" value="${esc(p.label)}" data-i="${i}" data-f="label">
+      <input type="number" class="w-num" value="${p.pt}" data-i="${i}" data-f="pt" min="0">
+      <button class="btn danger-text" data-i="${i}">×</button>
+    </div>`).join("");
+  el.querySelectorAll("input").forEach(inp=>{
+    inp.onchange = async ()=>{
+      const p = arr[+inp.dataset.i];
+      if(inp.dataset.f==="label") p.label = inp.value; else p.pt = Math.max(0,+inp.value||0);
+      await sync("saveSettings", { settings: S.settings });
+      renderGrant();
+    };
+  });
+  el.querySelectorAll("button").forEach(b=>{
+    b.onclick = async ()=>{
+      arr.splice(+b.dataset.i,1);
+      await sync("saveSettings", { settings: S.settings });
+      renderSettings(); renderGrant();
+    };
+  });
+}
+function renderSettings(){
+  presetRows("goldPresetRows", S.settings.goldPresets);
+  presetRows("silverPresetRows", S.settings.silverPresets);
+  const rEl = document.getElementById("rankRows");
+  rEl.innerHTML = S.settings.ranks.map((r,i)=>`
+    <div class="set-row">
+      <input type="text" class="w-label" value="${esc(r.label)}" data-i="${i}" data-f="label">
+      <input type="number" class="w-num" value="${r.min}" data-i="${i}" data-f="min" min="0">
+    </div>`).join("");
+  rEl.querySelectorAll("input").forEach(inp=>{
+    inp.onchange = async ()=>{
+      const r = S.settings.ranks[+inp.dataset.i];
+      if(inp.dataset.f==="label") r.label = inp.value; else r.min = Math.max(0,+inp.value||0);
+      await sync("saveSettings", { settings: S.settings });
+      renderRanking();
+    };
+  });
+  document.getElementById("perksInput").value = S.settings.perks || "";
+  document.getElementById("gasUrl").value = gasUrl || "";
+}
+
+/* ---- 全体再描画 ---- */
+function renderAll(){ renderRanking(); renderGrant(); renderHistory(); renderMembers(); renderSettings(); }
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* ---- 閲覧専用モード（共有リンク） ---- */
+async function tryViewerMode(){
+  /* シート連携リンク: #view=GASのURL → 常に最新を表示 */
+  const mv = location.hash.match(/#view=(.+)/);
+  if(mv){
+    document.getElementById("tabs").style.display = "none";
+    document.getElementById("shareBtnBox").style.display = "none";
+    try{
+      const d = await apiGet(decodeURIComponent(mv[1]));
+      applyRemote(d);
+      renderRanking(totals(), `${new Date().toLocaleString("ja-JP")} 時点`);
+    }catch(e){
+      document.getElementById("top3").innerHTML = '<div class="empty">データを読み込めませんでした。通信環境を確認して再読み込みしてください。</div>';
+    }
+    return true;
+  }
+  /* データ埋め込みリンク（シート未連携時の従来方式） */
+  const md = location.hash.match(/#d=(.+)/);
+  if(md){
+    try{
+      const json = decodeURIComponent(escape(atob(decodeURIComponent(md[1]))));
+      const p = JSON.parse(json);
+      S.settings.perks = p.perks || "";
+      S.settings.ranks = p.ranks || S.settings.ranks;
+      document.getElementById("tabs").style.display = "none";
+      document.getElementById("shareBtnBox").style.display = "none";
+      renderRanking(p.list, p.updated ? `${p.updated} 更新` : "");
+      return true;
+    }catch(e){ return false; }
+  }
+  return false;
+}
+
+/* ---- イベント ---- */
+function bind(){
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.onclick = ()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      document.getElementById("v-"+t.dataset.v).classList.add("active");
+    };
+  });
+  document.getElementById("kGold").onclick = ()=>{
+    grantKind="gold";
+    document.getElementById("kGold").classList.add("on");
+    document.getElementById("kSilver").classList.remove("on");
+    renderGrant();
+  };
+  document.getElementById("kSilver").onclick = ()=>{
+    grantKind="silver";
+    document.getElementById("kSilver").classList.add("on");
+    document.getElementById("kGold").classList.remove("on");
+    renderGrant();
+  };
+  document.getElementById("cAmount").oninput = updatePreview;
+
+  document.getElementById("grantBtn").onclick = async ()=>{
+    const mid = document.getElementById("gMember").value;
+    if(!mid) return toast("メンバーを選択してください");
+    if(!grantSel) return toast("内容を選択してください");
+    const pt = currentGrantPt();
+    if(pt<=0) return toast("ポイントを入力してください");
+    const label = grantSel==="custom"
+      ? (document.getElementById("cLabel").value.trim() || (grantKind==="gold"?"カスタム成約":"その他の功績"))
+      : grantSel.label;
+    const member = S.members.find(m=>m.id===mid) || {};
+    const rec = {
+      id: uid(), mid, kind: grantKind, pt, label,
+      reason: document.getElementById("gReason").value.trim(),
+      date: document.getElementById("gDate").value || todayStr()
+    };
+    S.history.push(rec);
+    await sync("addGrant", { ...rec, name: member.name || "" });
+    document.getElementById("gReason").value = "";
+    document.getElementById("cAmount").value = "";
+    document.getElementById("cLabel").value = "";
+    renderAll();
+    toast(`${member.name} に +${fmt(pt)}pt 付与しました`);
+  };
+
+  document.getElementById("mAdd").onclick = async ()=>{
+    const name = document.getElementById("mName").value.trim();
+    if(!name) return toast("名前を入力してください");
+    const rec = { id: uid(), name, role:"TRIBE生" };
+    S.members.push(rec);
+    document.getElementById("mName").value = "";
+    await sync("addMember", rec);
+    renderAll(); toast(`${name} を追加しました`);
+  };
+
+  document.getElementById("iconFile").onchange = async e=>{
+    const f = e.target.files[0];
+    e.target.value = "";
+    if(!f || !pendingIconMid) return;
+    const m = S.members.find(x=>x.id===pendingIconMid);
+    pendingIconMid = null;
+    if(!m) return;
+    try{
+      const icon = await fileToIcon(f);
+      m.icon = icon;
+      await sync("updateMemberIcon", { id: m.id, icon });
+      renderAll();
+      toast(`${m.name} のアイコンを設定しました`);
+    }catch(err){ toast("画像の読み込みに失敗しました"); }
+  };
+
+  document.getElementById("addGold").onclick = async ()=>{
+    S.settings.goldPresets.push({label:"新しい項目", pt:0});
+    await sync("saveSettings", { settings: S.settings });
+    renderSettings(); renderGrant();
+  };
+  document.getElementById("addSilver").onclick = async ()=>{
+    S.settings.silverPresets.push({label:"新しい項目", pt:0});
+    await sync("saveSettings", { settings: S.settings });
+    renderSettings(); renderGrant();
+  };
+  document.getElementById("perksInput").onchange = async e=>{
+    S.settings.perks = e.target.value;
+    await sync("saveSettings", { settings: S.settings });
+    renderRanking(); toast("特典テキストを保存しました");
+  };
+
+  /* シート連携の設定 */
+  document.getElementById("gasTest").onclick = async ()=>{
+    const url = document.getElementById("gasUrl").value.trim();
+    const st = document.getElementById("gasStatus");
+    if(!url){
+      gasUrl = "";
+      await store.save(CONF_KEY, { gasUrl:"" });
+      setSyncBadge(false);
+      st.className = "gas-status"; st.textContent = "連携を解除しました（ローカル保存に戻ります）";
+      return;
+    }
+    st.className = "gas-status"; st.textContent = "接続中…";
+    try{
+      const d = await apiGet(url);
+      if(!d.ok) throw new Error("bad response");
+      gasUrl = url;
+      await store.save(CONF_KEY, { gasUrl });
+      /* シートが空でローカルにデータがあれば移行を提案 */
+      if((!d.members || !d.members.length) && S.members.length){
+        if(confirm("シートはまだ空です。今このツールに入っているデータをシートに書き込みますか？")){
+          const pushed = await apiPost("bulk", {
+            members: S.members,
+            history: S.history.map(h=>({ ...h, name: (S.members.find(m=>m.id===h.mid)||{}).name || "" })),
+            settings: S.settings
+          });
+          applyRemote(pushed);
+        } else {
+          applyRemote(d);
+        }
+      } else {
+        applyRemote(d);
+      }
+      await store.save(KEY, S);
+      setSyncBadge(true);
+      st.className = "gas-status ok"; st.textContent = "✓ 連携完了。シートにデータが記録されます";
+      renderAll();
+      toast("スプレッドシートと連携しました");
+    }catch(e){
+      st.className = "gas-status ng";
+      st.textContent = "✗ 接続できませんでした。URLと「アクセスできるユーザー：全員」の設定を確認してください（claude.aiプレビュー内では接続不可）";
+    }
+  };
+
+  document.getElementById("shareBtn").onclick = ()=>{
+    let url;
+    if(gasUrl){
+      url = location.href.split("#")[0] + "#view=" + encodeURIComponent(gasUrl);
+    } else {
+      const payload = {
+        list: totals().map(m=>({name:m.name, role:m.role, gold:m.gold, silver:m.silver, total:m.total})),
+        perks: S.settings.perks, ranks: S.settings.ranks,
+        updated: new Date().toLocaleDateString("ja-JP")
+      };
+      url = location.href.split("#")[0] + "#d=" + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
+    }
+    if(navigator.clipboard?.writeText){
+      navigator.clipboard.writeText(url).then(()=>toast("閲覧専用リンクをコピーしました"));
+    } else { prompt("このリンクをコピーしてください", url); }
+  };
+
+  document.getElementById("exportBtn").onclick = ()=>{
+    const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `tribe-points-${todayStr()}.json`;
+    a.click();
+  };
+  document.getElementById("importBtn").onclick = ()=>document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = async ()=>{
+      try{
+        const d = JSON.parse(r.result);
+        if(!d.members || !d.settings) throw 0;
+        S = d;
+        await store.save(KEY, S);
+        renderAll(); toast("データを読み込みました（シートへ反映するには接続テストで移行）");
+      }catch(err){ toast("読み込みに失敗しました（ファイル形式を確認）"); }
+    };
+    r.readAsText(f);
+  };
+}
+
+/* ---- 起動 ---- */
+(async function init(){
+  document.getElementById("gDate").value = todayStr();
+  if(await tryViewerMode()) return;
+
+  const conf = await store.load(CONF_KEY);
+  gasUrl = conf?.gasUrl || "";
+
+  if(gasUrl){
+    try{
+      const d = await apiGet();
+      applyRemote(d);
+      await store.save(KEY, S);
+      setSyncBadge(true);
+    }catch(e){
+      const saved = await store.load(KEY);
+      if(saved && saved.members && saved.settings) S = saved;
+      setSyncBadge(false);
+      toast("⚠ シートに接続できないためローカルデータを表示中");
+    }
+  } else {
+    const saved = await store.load(KEY);
+    if(saved && saved.members && saved.settings) S = saved;
+    setSyncBadge(false);
+  }
+  bind();
+  renderAll();
+})();
+</script>
+</body>
+</html>
